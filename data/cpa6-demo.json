@@ -1,0 +1,177 @@
+[
+  {
+    "id": "demo",
+    "desc": "DEMO · 5题体验版",
+    "questions": [
+      {
+        "id": 401,
+        "type": "single",
+        "lo": "LO4.8",
+        "section": "Section 5 — Deposits",
+        "text": "A landlord collects a deposit of £1,800 from a new tenant whose monthly rent is £1,500 (annual rent £18,000). Which statement BEST describes the landlord's position?",
+        "opts": [
+          "The deposit is within the permitted limit as it is less than two months' rent",
+          "The deposit exceeds the permitted cap under the Tenant Fees Act 2019 and must be reduced",
+          "The deposit is acceptable as there is no cap for monthly rents above £1,000",
+          "The deposit cap only applies at the start of the tenancy"
+        ],
+        "correct": [
+          1
+        ],
+        "ans": "B",
+        "optExpl": [
+          "Incorrect — the cap is five or six weeks, not two months",
+          "Correct — annual rent £18,000 < £50,000, so cap is 5 weeks = £1,730.77; £1,800 exceeds this",
+          "Incorrect — no such exemption exists",
+          "Incorrect — the cap applies throughout"
+        ],
+        "expl": "Annual rent £18,000 < £50,000 threshold → maximum deposit = <strong>five weeks' rent</strong>: £1,500×12÷52×5 = £1,730.77. The landlord has charged £1,800, exceeding the cap by £69.23.",
+        "key": "🔑 Annual rent < £50,000 → 5 weeks max | ≥ £50,000 → 6 weeks max",
+        "ref": "Tenant Fees Act 2019, Schedule 1"
+      },
+      {
+        "id": 402,
+        "type": "match",
+        "lo": "LO11.6",
+        "section": "Section 11 — Ending Tenancies",
+        "text": "Indicate whether each circumstance would or would not prevent a landlord from serving a valid Section 21 notice.",
+        "rows": [
+          {
+            "left": "Deposit protected, but prescribed information not served on the tenant",
+            "correct": "Would prevent Section 21"
+          },
+          {
+            "left": "Landlord has a valid EPC exemption registered on the PRS Exemptions Register",
+            "correct": "Would NOT prevent Section 21"
+          },
+          {
+            "left": "Tenant complained to the local authority about disrepair four months ago",
+            "correct": "Would prevent Section 21"
+          },
+          {
+            "left": "Tenancy is currently within the fixed term — three months remaining",
+            "correct": "Would prevent Section 21"
+          },
+          {
+            "left": "Landlord did not carry out a right to rent check before the tenancy began",
+            "correct": "Would NOT prevent Section 21"
+          },
+          {
+            "left": "Current Gas Safety Certificate expired two weeks ago",
+            "correct": "Would prevent Section 21"
+          }
+        ],
+        "cats": [
+          "Would prevent Section 21",
+          "Would NOT prevent Section 21"
+        ],
+        "ans": "Prevents: 1,3,4,6 | Does NOT prevent: 2,5",
+        "expl": "• Prescribed information not served → prevents S21 even if deposit is protected<br>• Registered EPC exemption → does not prevent (compliant state)<br>• Complaint 4 months ago → prevents (retaliatory eviction, 6-month rule, Deregulation Act 2015)<br>• Fixed term still running → S21 cannot be served<br>• Right to rent not done → does NOT prevent S21 (separate obligation, not S21 precondition)<br>• Gas Safety Certificate expired → prevents S21",
+        "key": "⚠️ Trap: Right to rent check failure does NOT invalidate Section 21",
+        "ref": "Housing Act 1988 s.21; Deregulation Act 2015 ss.33–41"
+      },
+      {
+        "id": 403,
+        "type": "multi",
+        "lo": "LO12.1",
+        "section": "Section 12 — Repairs",
+        "text": "A tenant reports the boiler has stopped working in January. Under Section 11 of the Landlord and Tenant Act 1985, which obligations does the landlord have? (Select all that apply.)",
+        "opts": [
+          "Repair the boiler within a reasonable timeframe after being notified",
+          "Provide the tenant with alternative heating while repair is arranged",
+          "Keep the installations for the supply of gas in repair and proper working order",
+          "Replace the boiler with a more energy-efficient model if it cannot be repaired",
+          "Reimburse the tenant for costs incurred due to lack of heating"
+        ],
+        "correct": [
+          0,
+          2
+        ],
+        "ans": "A and C",
+        "optExpl": [
+          "Correct — Section 11 requires repair within reasonable time after notification",
+          "Incorrect — providing temporary heating is good practice but not a s.11 statutory obligation",
+          "Correct — s.11 expressly includes gas supply installations",
+          "Incorrect — obligation is to repair, not upgrade",
+          "Incorrect — compensation for consequential loss is tort law, not s.11 directly"
+        ],
+        "expl": "Section 11 LTA 1985 covers: (1) structure and exterior; (2) water, gas, electricity and sanitation installations; (3) space heating and hot water. Temporary heating (B) and upgrading (D) are not s.11 requirements.",
+        "key": "🔑 S11 = Structure + Water/Gas/Elec + Heating/Hot water. Nothing more.",
+        "ref": "Landlord and Tenant Act 1985, s.11"
+      },
+      {
+        "id": 404,
+        "type": "fill",
+        "lo": "LO6.1",
+        "section": "Section 7 — HMO",
+        "text": "Fill in the blanks to complete the statements about mandatory HMO licensing.",
+        "blanks": [
+          {
+            "sentence": "An HMO requires a mandatory licence when occupied by ___ or more persons forming ___ or more separate households.",
+            "answers": [
+              "five",
+              "two"
+            ],
+            "opts": [
+              [
+                "five",
+                "three"
+              ],
+              [
+                "two",
+                "four"
+              ]
+            ]
+          },
+          {
+            "sentence": "A landlord without a licence may face a civil penalty of up to ___. Tenants may apply to the FTT for a Rent Repayment Order of up to ___ months' rent.",
+            "answers": [
+              "£30,000",
+              "12"
+            ],
+            "opts": [
+              [
+                "£30,000",
+                "£5,000"
+              ],
+              [
+                "12",
+                "6"
+              ]
+            ]
+          }
+        ],
+        "ans": "five / two / £30,000 / 12",
+        "expl": "Mandatory HMO licensing threshold: <strong>5+ persons from 2+ separate households</strong>. Three-storey rule abolished in 2018. Civil penalty: up to <strong>£30,000</strong>. Rent Repayment Order: up to <strong>12 months'</strong> rent.",
+        "key": "🔑 5 persons / 2 households / £30,000 / 12-month RRO",
+        "ref": "Housing Act 2004, ss.55–78"
+      },
+      {
+        "id": 405,
+        "type": "single",
+        "lo": "LO3.3",
+        "section": "Section 3 — Marketing & Contracts",
+        "text": "A landlord lets a property to a friend for six months at a reduced rent. The friend already owns their own home and will continue living there at weekends. Which tenancy type is MOST appropriate?",
+        "opts": [
+          "An assured shorthold tenancy, as it is for a fixed term of six months",
+          "A contractual tenancy, as the property will not be the friend's only or principal home",
+          "A licence to occupy, as the arrangement is informal and between friends",
+          "A statutory periodic tenancy, as no fixed term has been formally agreed"
+        ],
+        "correct": [
+          1
+        ],
+        "ans": "B",
+        "optExpl": [
+          "Incorrect — AST requires the property to be the tenant's only or principal home",
+          "Correct — not the principal home → Housing Act 1988 does not apply → contractual tenancy",
+          "Incorrect — the friend will have exclusive possession, making this a tenancy not a licence",
+          "Incorrect — statutory periodic arises when fixed term expires; cannot be created from scratch"
+        ],
+        "expl": "An AST requires the dwelling to be the tenant's <strong>only or principal home</strong> (HA 1988, s.1). The friend continues to own and occupy their own home, so the condition is not met. Use a <strong>contractual tenancy</strong>.",
+        "key": "AST prerequisite: only or principal home. Not principal home = no AST.",
+        "ref": "Housing Act 1988, s.1"
+      }
+    ]
+  }
+]

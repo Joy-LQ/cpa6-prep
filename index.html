@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CPA6 Prep · ARLA 备考刷题系统</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap');
+*{-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;background-image:repeating-linear-gradient(-45deg,transparent,transparent 90px,rgba(180,130,80,0.05) 90px,rgba(180,130,80,0.05) 91px);}
+@media print{body *{visibility:hidden;}body::after{content:'© CPA6 Prep · 受版权保护';visibility:visible;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.5rem;color:#333;}}
+:root{--ink:#18120a;--parchment:#faf8f3;--cream:#f2ece0;--gold:#b5803a;--gold-light:#d4a060;--gold-pale:#f2ddb8;--gold-ultra:#fdf5e6;--green:#2a7a52;--green-pale:#e6f4ed;--red:#b83228;--red-pale:#fce8e6;--blue:#2850a0;--amber:#c47c00;--amber-pale:#fff4e0;--shadow:rgba(24,18,10,0.1);}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--ink);overflow-x:hidden;}
+.screen{display:none;min-height:100vh;flex-direction:column;}.screen.active{display:flex;}
+
+/* GATE */
+#screen-gate{background:var(--ink);align-items:center;justify-content:center;padding:2rem;}
+.gate-logo{font-family:'Playfair Display',serif;font-size:clamp(2.5rem,8vw,4.2rem);font-weight:900;color:var(--gold);letter-spacing:-2px;margin-bottom:.25rem;}
+.gate-tagline{font-size:.7rem;color:rgba(255,255,255,.3);letter-spacing:5px;text-transform:uppercase;margin-bottom:3rem;}
+.gate-card{background:rgba(255,255,255,.05);border:1px solid rgba(180,130,80,.3);border-radius:20px;padding:2.5rem 2rem;width:100%;max-width:380px;}
+.gate-card p{color:rgba(255,255,255,.5);font-size:.88rem;line-height:1.75;margin-bottom:1.5rem;text-align:center;}
+.gate-input{width:100%;background:rgba(255,255,255,.07);border:1.5px solid rgba(180,130,80,.35);border-radius:12px;padding:.9rem 1.2rem;color:#fff;font-family:'DM Mono',monospace;font-size:1.1rem;letter-spacing:4px;text-align:center;text-transform:uppercase;outline:none;transition:border-color .2s;-webkit-user-select:text!important;user-select:text!important;margin-bottom:1rem;}
+.gate-input::placeholder{color:rgba(255,255,255,.2);letter-spacing:1px;text-transform:none;font-size:.85rem;}
+.gate-input:focus{border-color:var(--gold);}
+.gate-btn{width:100%;background:var(--gold);border:none;border-radius:12px;padding:1rem;color:var(--ink);font-family:'DM Sans',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;transition:background .2s;}
+.gate-btn:hover{background:var(--gold-light);}
+.gate-btn:disabled{opacity:.5;cursor:not-allowed;}
+.gate-err{font-size:.78rem;color:#e05a50;margin-top:.75rem;min-height:1.2rem;text-align:center;}
+.gate-loading{font-size:.78rem;color:rgba(255,255,255,.4);margin-top:.75rem;text-align:center;display:none;}
+.gate-loading.show{display:block;}
+
+/* LOADING SPINNER */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(180,130,80,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:.4rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* HOME */
+#screen-home{flex-direction:column;}
+.app-header{background:var(--ink);padding:.9rem 1.4rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;flex-shrink:0;}
+.ah-brand{font-family:'Playfair Display',serif;font-weight:900;font-size:1.4rem;color:var(--gold);letter-spacing:-.5px;}
+.ah-badge{background:rgba(180,130,80,.2);border:1px solid rgba(180,130,80,.4);border-radius:20px;padding:.25rem .8rem;font-size:.68rem;color:var(--gold-light);font-family:'DM Mono',monospace;letter-spacing:1px;}
+.home-body{flex:1;overflow-y:auto;padding-bottom:3rem;}
+.hero{padding:2.5rem 1.5rem 1.5rem;text-align:center;max-width:600px;margin:0 auto;}
+.hero-eye{font-size:.68rem;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:.75rem;font-family:'DM Mono',monospace;}
+.hero-h{font-family:'Playfair Display',serif;font-size:clamp(1.7rem,5vw,2.5rem);font-weight:900;line-height:1.2;margin-bottom:.75rem;}
+.hero-sub{font-size:.88rem;color:rgba(24,18,10,.52);line-height:1.75;margin-bottom:1.75rem;}
+.stats-row{display:flex;justify-content:center;gap:2rem;flex-wrap:wrap;margin-bottom:2rem;}
+.stat-i{text-align:center;}.stat-n{font-family:'DM Mono',monospace;font-size:1.9rem;font-weight:500;color:var(--gold);}.stat-l{font-size:.7rem;color:rgba(24,18,10,.42);margin-top:.15rem;}
+.tab-bar{display:flex;gap:.5rem;padding:0 1.4rem;margin-bottom:1.2rem;max-width:680px;margin-left:auto;margin-right:auto;}
+.tab-btn{flex:1;padding:.6rem 1rem;border:1.5px solid var(--gold-pale);border-radius:10px;background:transparent;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;color:rgba(24,18,10,.45);cursor:pointer;transition:all .18s;text-align:center;}
+.tab-btn.active{background:var(--ink);border-color:var(--ink);color:#fff;}
+.tab-content{display:none;}.tab-content.active{display:block;}
+.sec-label{font-size:.68rem;letter-spacing:3px;text-transform:uppercase;color:rgba(24,18,10,.38);font-family:'DM Mono',monospace;padding:0 1.4rem;margin-bottom:.85rem;}
+.paper-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:.7rem;padding:0 1.2rem;max-width:680px;margin:0 auto 2rem;}
+.pc{background:var(--parchment);border:1.5px solid var(--gold-pale);border-radius:16px;padding:1.2rem 1rem;cursor:pointer;transition:all .2s;text-align:center;position:relative;overflow:hidden;}
+.pc::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(180,130,80,.08),transparent 60%);opacity:0;transition:opacity .2s;}
+.pc:hover:not(.locked){border-color:var(--gold);transform:translateY(-2px);box-shadow:0 8px 24px var(--shadow);}
+.pc:hover:not(.locked)::before{opacity:1;}
+.pc.locked{opacity:.42;cursor:not-allowed;}
+.pc-num{font-family:'DM Mono',monospace;font-size:.65rem;color:rgba(24,18,10,.3);margin-bottom:.4rem;letter-spacing:1px;}
+.pc-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;margin-bottom:.35rem;}
+.pc-meta{font-size:.7rem;color:rgba(24,18,10,.42);line-height:1.5;}
+.pc-count{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--gold);margin-top:.3rem;font-weight:500;}
+.pc-badge{display:inline-block;margin-top:.55rem;font-size:.62rem;font-weight:700;padding:.18rem .55rem;border-radius:6px;letter-spacing:.5px;text-transform:uppercase;}
+.pc-badge.live{background:rgba(42,122,82,.13);color:#2a7a52;}
+.pc-badge.soon{background:rgba(24,18,10,.06);color:rgba(24,18,10,.3);}
+.section-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:.7rem;padding:0 1.2rem;max-width:680px;margin:0 auto 2rem;}
+.sc{background:var(--parchment);border:1.5px solid var(--gold-pale);border-radius:16px;padding:1.1rem 1rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.sc::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(180,130,80,.08),transparent 60%);opacity:0;transition:opacity .2s;}
+.sc:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 8px 24px var(--shadow);}
+.sc:hover::before{opacity:1;}
+.sc.empty{opacity:.38;cursor:not-allowed;}
+.sc-lo{font-family:'DM Mono',monospace;font-size:.63rem;color:var(--gold);margin-bottom:.3rem;letter-spacing:.5px;}
+.sc-title{font-size:.88rem;font-weight:700;margin-bottom:.25rem;line-height:1.35;}
+.sc-count{font-family:'DM Mono',monospace;font-size:.72rem;color:rgba(24,18,10,.4);margin-top:.3rem;}
+.info-section{max-width:620px;margin:0 auto 1rem;padding:0 1.4rem;}
+.info-card{background:var(--parchment);border:1px solid var(--gold-pale);border-radius:14px;padding:1.25rem;margin-bottom:.75rem;}
+.info-card h3{font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:.4rem;}
+.info-card p{font-size:.82rem;color:rgba(24,18,10,.52);line-height:1.7;}
+.home-footer{text-align:center;padding:1.5rem 1rem 2rem;font-size:.68rem;color:rgba(24,18,10,.28);font-family:'DM Mono',monospace;}
+
+/* QUIZ */
+#screen-quiz{flex-direction:column;}
+.quiz-header{background:var(--ink);padding:.8rem 1.2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;flex-shrink:0;gap:.5rem;}
+.qh-left{display:flex;align-items:center;gap:.6rem;flex-shrink:0;}
+.back-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.28rem .65rem;color:rgba(255,255,255,.6);font-size:.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.back-btn:hover{background:rgba(255,255,255,.14);}
+.qh-brand{font-family:'Playfair Display',serif;font-weight:900;font-size:1.25rem;color:var(--gold);}
+.timer-display{font-family:'DM Mono',monospace;font-size:.92rem;font-weight:500;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.28rem .65rem;letter-spacing:1px;transition:color .3s,background .3s;}
+.timer-display.warning{color:#f59e0b;background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3);}
+.timer-display.overtime{color:#ef4444;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);}
+.qh-badge{background:rgba(180,130,80,.2);border:1px solid rgba(180,130,80,.4);border-radius:20px;padding:.25rem .7rem;font-size:.65rem;color:var(--gold-light);font-family:'DM Mono',monospace;letter-spacing:1px;flex-shrink:0;}
+.prog-bar{height:3px;background:rgba(180,130,80,.18);flex-shrink:0;}
+.prog-fill{height:100%;background:var(--gold);transition:width .55s ease;}
+.stats-strip{background:var(--parchment);border-bottom:1px solid var(--gold-pale);padding:.6rem 1.2rem;display:flex;gap:1.1rem;align-items:center;overflow-x:auto;flex-shrink:0;}
+.st{display:flex;align-items:center;gap:.35rem;flex-shrink:0;}
+.dot{width:7px;height:7px;border-radius:50%;}
+.dot.c{background:var(--green);}.dot.w{background:var(--red);}.dot.r{background:transparent;border:1.5px solid var(--gold);}.dot.f{background:var(--amber);}
+.sl{font-size:.68rem;color:rgba(24,18,10,.42);}.sn{font-family:'DM Mono',monospace;font-size:.78rem;font-weight:500;}
+.paper-tag{margin-left:auto;flex-shrink:0;}
+.paper-tag span{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--gold);background:var(--gold-ultra);border:1px solid var(--gold-pale);padding:.16rem .5rem;border-radius:7px;}
+.quiz-body{flex:1;overflow-y:auto;padding:1.2rem 1rem 7rem;}
+.quiz-inner{max-width:680px;margin:0 auto;}
+.overtime-banner{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:.6rem 1rem;margin-bottom:1rem;text-align:center;font-size:.8rem;color:#b83228;font-weight:500;}
+.qcard{background:var(--parchment);border:1px solid var(--gold-pale);border-radius:20px;padding:1.6rem 1.4rem;box-shadow:0 4px 28px var(--shadow);animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.qmeta{display:flex;align-items:center;gap:.45rem;margin-bottom:1.1rem;flex-wrap:wrap;}
+.qnum{font-family:'DM Mono',monospace;font-size:.67rem;color:rgba(24,18,10,.3);letter-spacing:1px;}
+.qtype-badge{font-size:.63rem;font-weight:700;padding:.17rem .6rem;border-radius:7px;letter-spacing:.5px;text-transform:uppercase;}
+.qtype-badge.single{background:rgba(180,130,80,.14);color:var(--gold);}
+.qtype-badge.multi{background:rgba(40,80,160,.11);color:var(--blue);}
+.qtype-badge.match{background:rgba(42,122,82,.11);color:var(--green);}
+.qtype-badge.fill{background:rgba(184,50,40,.09);color:var(--red);}
+.qlo{font-size:.63rem;color:rgba(24,18,10,.28);font-family:'DM Mono',monospace;}
+.flag-btn{margin-left:auto;background:transparent;border:1.5px solid rgba(24,18,10,.15);border-radius:8px;padding:.2rem .6rem;font-size:.7rem;color:rgba(24,18,10,.4);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .18s;white-space:nowrap;}
+.flag-btn:hover{border-color:var(--amber);color:var(--amber);}
+.flag-btn.flagged{background:var(--amber-pale);border-color:var(--amber);color:var(--amber);}
+.qtxt{font-size:.96rem;line-height:1.68;margin-bottom:1.35rem;}
+.qinstr{font-size:.75rem;color:rgba(24,18,10,.42);margin-bottom:.88rem;font-style:italic;}
+.opts{display:flex;flex-direction:column;gap:.5rem;}
+.opt{background:#fff;border:1.5px solid rgba(180,130,80,.2);border-radius:13px;padding:.8rem 1rem;text-align:left;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--ink);transition:all .17s;display:flex;align-items:flex-start;gap:.65rem;line-height:1.5;}
+.opt:hover:not(:disabled){border-color:var(--gold);background:var(--gold-ultra);transform:translateX(2px);}
+.opt:disabled{cursor:default;}
+.opt-l{min-width:24px;height:24px;border-radius:6px;background:var(--gold-pale);color:var(--gold);font-size:.69rem;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;flex-shrink:0;margin-top:1px;transition:all .17s;}
+.opt.sel{border-color:var(--gold);background:rgba(180,130,80,.07);}.opt.sel .opt-l{background:var(--gold);color:#fff;}
+.opt.correct{border-color:var(--green);background:var(--green-pale);}.opt.correct .opt-l{background:var(--green);color:#fff;}
+.opt.wrong{border-color:var(--red);background:var(--red-pale);}.opt.wrong .opt-l{background:var(--red);color:#fff;}
+.match-wrap{display:flex;flex-direction:column;gap:.85rem;}
+.match-row{display:flex;align-items:stretch;gap:.45rem;}
+.match-left{flex:1;background:#fff;border:1.5px solid rgba(180,130,80,.18);border-radius:12px;padding:.65rem .9rem;font-size:.85rem;line-height:1.5;display:flex;align-items:center;}
+.match-sel{flex-shrink:0;border:1.5px solid rgba(180,130,80,.28);border-radius:12px;background:#fff;padding:.45rem .6rem;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--ink);cursor:pointer;outline:none;transition:border-color .2s;min-width:112px;-webkit-user-select:auto!important;user-select:auto!important;}
+.match-sel:focus{border-color:var(--gold);}.match-sel:disabled{background:var(--cream);cursor:default;}
+.match-row.correct .match-sel{border-color:var(--green);background:var(--green-pale);color:var(--green);}
+.match-row.wrong .match-sel{border-color:var(--red);background:var(--red-pale);color:var(--red);}
+.match-ans-tag{font-size:.7rem;color:var(--green);font-weight:600;padding:.16rem .42rem;background:var(--green-pale);border-radius:5px;white-space:nowrap;flex-shrink:0;}
+.fill-wrap{display:flex;flex-direction:column;gap:.85rem;}
+.fill-row{background:#fff;border:1px solid rgba(180,130,80,.18);border-radius:12px;padding:.9rem 1rem;}
+.fill-sent{font-size:.87rem;line-height:1.85;margin-bottom:.55rem;}
+.blank-sel{display:inline-block;border:none;border-bottom:2px solid var(--gold);background:transparent;padding:.08rem .32rem;font-family:'DM Mono',monospace;font-size:.84rem;color:var(--gold);cursor:pointer;outline:none;min-width:108px;text-align:center;-webkit-user-select:auto!important;user-select:auto!important;}
+.blank-sel:focus{border-bottom-color:var(--ink);}.blank-sel:disabled{cursor:default;}
+.blank-sel.ok{border-bottom-color:var(--green);color:var(--green);}.blank-sel.bad{border-bottom-color:var(--red);color:var(--red);text-decoration:line-through;}
+.exp{display:none;margin-top:1.15rem;background:var(--gold-ultra);border:1px solid var(--gold-pale);border-left:4px solid var(--gold);border-radius:13px;padding:1.1rem 1.15rem;animation:fadeUp .3s ease;}
+.exp.show{display:block;}
+.exp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:.5rem;}
+.exp-result{font-size:.71rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:.35rem;}
+.exp-result.pass{color:var(--green);}.exp-result.fail{color:var(--red);}
+.exp-tags{display:flex;gap:.4rem;flex-wrap:wrap;}
+.exp-tag{font-size:.62rem;font-family:'DM Mono',monospace;padding:.15rem .5rem;border-radius:6px;font-weight:500;}
+.exp-tag.lo{background:rgba(40,80,160,.1);color:var(--blue);}
+.exp-tag.section{background:rgba(42,122,82,.1);color:var(--green);}
+.exp-ans{font-size:.77rem;color:rgba(24,18,10,.48);margin-bottom:.9rem;font-family:'DM Mono',monospace;background:rgba(24,18,10,.04);padding:.4rem .7rem;border-radius:7px;}
+.exp-breakdown{margin-bottom:.8rem;}
+.exp-bd-title{font-size:.72rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:rgba(24,18,10,.5);margin-bottom:.5rem;}
+.exp-opt-row{display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.45rem;font-size:.84rem;line-height:1.55;}
+.exp-opt-l{min-width:22px;height:22px;border-radius:5px;font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;flex-shrink:0;margin-top:1px;}
+.exp-opt-l.c{background:var(--green);color:#fff;}.exp-opt-l.w{background:rgba(24,18,10,.08);color:rgba(24,18,10,.4);}
+.exp-txt{font-size:.85rem;line-height:1.72;}
+.exp-key{margin-top:.8rem;padding:.58rem .78rem;background:rgba(180,130,80,.11);border-radius:8px;font-size:.79rem;line-height:1.65;color:rgba(24,18,10,.62);}
+.exp-ref{margin-top:.65rem;font-size:.72rem;color:rgba(24,18,10,.38);font-family:'DM Mono',monospace;border-top:1px solid rgba(180,130,80,.15);padding-top:.55rem;}
+.action-area{margin-top:1.1rem;}
+.btn-row{display:flex;gap:.6rem;}
+.submit-btn{flex:1;background:var(--ink);border:none;border-radius:13px;padding:.92rem;color:#fff;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;cursor:pointer;transition:background .2s,transform .1s;}
+.submit-btn:hover:not(:disabled){background:#2d1e0f;}.submit-btn:active:not(:disabled){transform:scale(.99);}
+.submit-btn:disabled{opacity:.25;cursor:not-allowed;}
+.finish-btn{background:transparent;border:1.5px solid rgba(24,18,10,.18);border-radius:13px;padding:.92rem 1rem;color:rgba(24,18,10,.5);font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;cursor:pointer;transition:all .18s;white-space:nowrap;}
+.finish-btn:hover{border-color:var(--red);color:var(--red);}
+.next-btn{width:100%;background:var(--gold);border:none;border-radius:13px;padding:.92rem;color:var(--ink);font-family:'DM Sans',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:.42rem;}
+.next-btn:hover{background:var(--gold-light);}
+.quiz-footer{position:fixed;bottom:0;left:0;right:0;background:var(--parchment);border-top:1px solid var(--gold-pale);padding:.68rem 1.2rem;display:flex;justify-content:space-between;align-items:center;box-shadow:0 -4px 22px var(--shadow);z-index:100;}
+.qf-nav{font-family:'DM Mono',monospace;font-size:.74rem;color:rgba(24,18,10,.42);}
+.qf-copy{font-size:.62rem;color:rgba(24,18,10,.2);font-family:'DM Mono',monospace;}
+
+/* RESULTS */
+#screen-results{flex-direction:column;}
+.results-body{flex:1;overflow-y:auto;padding:2.5rem 1.25rem 3rem;text-align:center;}
+.res-icon{font-size:3.2rem;margin-bottom:.65rem;}
+.res-title{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;margin-bottom:.2rem;}
+.res-pct{font-family:'DM Mono',monospace;font-size:3.6rem;font-weight:500;color:var(--gold);margin:.65rem 0;}
+.res-overtime{font-size:.8rem;color:var(--red);background:var(--red-pale);padding:.3rem .8rem;border-radius:8px;display:inline-block;margin-bottom:.5rem;}
+.res-time{font-size:.8rem;color:rgba(24,18,10,.45);font-family:'DM Mono',monospace;margin-bottom:.5rem;}
+.res-grid{display:flex;justify-content:center;gap:2.2rem;margin:1.1rem 0;flex-wrap:wrap;}
+.rg-i{text-align:center;}.rg-n{font-family:'DM Mono',monospace;font-size:1.7rem;font-weight:500;}
+.rg-n.g{color:var(--green);}.rg-n.r{color:var(--red);}.rg-n.a{color:var(--amber);}
+.rg-l{font-size:.68rem;color:rgba(24,18,10,.42);margin-top:.18rem;}
+.res-msg{font-size:.86rem;color:rgba(24,18,10,.52);line-height:1.72;max-width:340px;margin:0 auto 1.5rem;}
+.flagged-list{background:var(--parchment);border:1px solid var(--gold-pale);border-radius:14px;padding:1.2rem;margin:1rem auto;max-width:400px;text-align:left;}
+.flagged-list h3{font-family:'Playfair Display',serif;font-size:.95rem;margin-bottom:.7rem;color:var(--amber);}
+.flagged-item{font-size:.8rem;color:rgba(24,18,10,.6);padding:.35rem 0;border-bottom:1px solid rgba(180,130,80,.1);line-height:1.5;}
+.flagged-item:last-child{border-bottom:none;}
+.res-actions{display:flex;flex-direction:column;gap:.55rem;max-width:340px;margin:1.5rem auto 0;}
+.res-btn-pri{background:var(--gold);border:none;border-radius:13px;padding:1rem;color:var(--ink);font-family:'DM Sans',sans-serif;font-weight:700;font-size:.91rem;cursor:pointer;transition:background .2s;}
+.res-btn-pri:hover{background:var(--gold-light);}
+.res-btn-sec{background:transparent;border:1.5px solid rgba(24,18,10,.18);border-radius:13px;padding:.92rem;color:var(--ink);font-family:'DM Sans',sans-serif;font-weight:600;font-size:.86rem;cursor:pointer;transition:border-color .2s;}
+.res-btn-sec:hover{border-color:var(--gold);}
+.wm{position:fixed;inset:0;pointer-events:none;z-index:9999;display:flex;align-items:center;justify-content:center;transform:rotate(-30deg);opacity:0;transition:opacity .3s;}
+.wm span{font-family:'DM Mono',monospace;font-size:12px;color:rgba(180,130,80,.15);letter-spacing:2px;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="wm" id="wm"><span id="wm-txt">CPA6 Prep · 受版权保护</span></div>
+
+<!-- GATE -->
+<div class="screen active" id="screen-gate">
+  <div class="gate-logo">CPA6 Prep</div>
+  <div class="gate-tagline">ARLA 备考刷题系统 · 持证人出品</div>
+  <div class="gate-card">
+    <p>请输入您的专属访问码<br><small style="opacity:.65">购买后通过邮件发送</small></p>
+    <input class="gate-input" id="code-in" type="text" placeholder="输入访问码" maxlength="12" autocomplete="off" spellcheck="false"/>
+    <button class="gate-btn" id="gate-btn" onclick="tryAccess()">进入系统</button>
+    <div class="gate-err" id="gate-err"></div>
+    <div class="gate-loading" id="gate-loading">
+      <span class="spinner"></span>正在加载题库，请稍候…
+    </div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="screen" id="screen-home">
+  <header class="app-header">
+    <div class="ah-brand">CPA6 Prep</div>
+    <div class="ah-badge" id="user-tag">DEMO</div>
+  </header>
+  <div class="home-body">
+    <div class="hero">
+      <div class="hero-eye">ARLA Propertymark · Level 3 CPA6</div>
+      <div class="hero-h">选择方式，开始备考</div>
+      <div class="hero-sub">模拟试卷 · 原创题目 · 12个章节分类<br>由ARLA Level 3持证人亲历备考整理</div>
+      <div class="stats-row" id="stats-row">
+        <div class="stat-i"><div class="stat-n" id="stat-papers">—</div><div class="stat-l">套模拟试卷</div></div>
+        <div class="stat-i"><div class="stat-n" id="stat-questions">—</div><div class="stat-l">道原创题目</div></div>
+        <div class="stat-i"><div class="stat-n">4</div><div class="stat-l">种题型</div></div>
+        <div class="stat-i"><div class="stat-n">12</div><div class="stat-l">章节全覆盖</div></div>
+      </div>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('papers')">📋 按套刷题</button>
+      <button class="tab-btn" onclick="switchTab('sections')">📚 按章节刷题</button>
+    </div>
+    <div class="tab-content active" id="tab-papers">
+      <div class="sec-label">选择试卷 · Mock Papers — 每套30题 · 45分钟</div>
+      <div class="paper-grid" id="paper-grid"></div>
+    </div>
+    <div class="tab-content" id="tab-sections">
+      <div class="sec-label">按章节刷题 · Study by Section</div>
+      <div class="section-grid" id="section-grid"></div>
+    </div>
+    <div class="info-section">
+      <div class="info-card">
+        <h3>💡 使用提示</h3>
+        <p>每次刷题题目和选项顺序随机打乱。答完每题后显示详细中文解析和考纲出处。支持标记（Flag）功能和45分钟倒计时。</p>
+      </div>
+      <div class="info-card">
+        <h3>⚠️ 版本说明</h3>
+        <p>当前内容适用于 <strong>2026年5月前</strong> 考试（Pre-RRA）。Renters' Rights Act 生效后，已购用户免费获得更新版本。</p>
+      </div>
+    </div>
+    <div class="home-footer">© CPA6 Prep · ARLA Level 3 备考系统 · V4.0 PRE-RRA</div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="screen-quiz">
+  <header class="quiz-header">
+    <div class="qh-left">
+      <button class="back-btn" onclick="confirmGoHome()">← 返回</button>
+      <div class="qh-brand">CPA6 Prep</div>
+    </div>
+    <div class="timer-display" id="timer">45:00</div>
+    <div class="qh-badge" id="quiz-user-tag">DEMO</div>
+  </header>
+  <div class="prog-bar"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+  <div class="stats-strip">
+    <div class="st"><div class="dot c"></div><span class="sl">答对</span><span class="sn" id="sc">0</span></div>
+    <div class="st"><div class="dot w"></div><span class="sl">答错</span><span class="sn" id="sw">0</span></div>
+    <div class="st"><div class="dot r"></div><span class="sl">剩余</span><span class="sn" id="sr">30</span></div>
+    <div class="st"><div class="dot f"></div><span class="sl">标记</span><span class="sn" id="sf">0</span></div>
+    <div class="st paper-tag"><span id="paper-tag-txt">Mock Paper</span></div>
+  </div>
+  <div class="quiz-body">
+    <div class="quiz-inner">
+      <div id="overtime-banner" style="display:none" class="overtime-banner">⏱ 已超过45分钟标准考试时长，继续完成剩余题目</div>
+      <div class="qcard" id="qcard"></div>
+      <div class="action-area" id="action-area"></div>
+    </div>
+  </div>
+  <div class="quiz-footer">
+    <div class="qf-nav">题目 <span id="qcur">1</span> / <span id="qtot">30</span></div>
+    <div class="qf-copy">© CPA6 Prep</div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="screen-results">
+  <header class="app-header">
+    <div class="ah-brand">CPA6 Prep</div>
+    <div class="ah-badge" id="res-user-tag">DEMO</div>
+  </header>
+  <div class="results-body" id="results-body"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+// CONFIG — 上线前修改 DATA_BASE_URL 为 GitHub raw URL
+// ══════════════════════════════════════════════════════════════════════════
+const DATA_BASE_URL = 'https://raw.githubusercontent.com/Joy-LQ/cpa6-prep/main/data/';
+// 本地测试时改为：const DATA_BASE_URL = 'http://localhost:8080/data/';
+
+// 访问码配置：{ 访问码: { label, file, key } }
+// file: 'demo' → demo.enc | 'full' → full.enc
+// key:  解密密钥（DEMO 用访问码本身，付费用户用 Master Key）
+const CODES = {
+  'DEMO2026':  { label:'DEMO',     file:'demo', key:'DEMO2026' },
+  'JOY-CPA6':  { label:'JOY·L',   file:'full', key:'MLL-CPA6-FULL-2026' },
+  'ARLA0001':  { label:'USER·01',  file:'full', key:'MLL-CPA6-FULL-2026' },
+  'ARLA0002':  { label:'USER·02',  file:'full', key:'MLL-CPA6-FULL-2026' },
+  'ARLA0003':  { label:'USER·03',  file:'full', key:'MLL-CPA6-FULL-2026' },
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// SECURITY
+// ══════════════════════════════════════════════════════════════════════════
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey||e.metaKey) && ['s','p','u','c','a','i'].includes(e.key.toLowerCase())) e.preventDefault();
+  if (e.key === 'F12' || e.keyCode === 123) e.preventDefault();
+});
+let curUser = 'DEMO';
+function flashWM() {
+  const ts = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('wm-txt').textContent = `CPA6 Prep · ${curUser} · ${ts} · 受版权保护`;
+  const el = document.getElementById('wm');
+  el.style.opacity = '1';
+  setTimeout(() => el.style.opacity = '0', 600);
+}
+setInterval(flashWM, 9000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) flashWM(); });
+
+// ══════════════════════════════════════════════════════════════════════════
+// SCREEN ROUTER
+// ══════════════════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// CRYPTO — AES-256-GCM + PBKDF2 (Web Crypto API, runs in browser)
+// ══════════════════════════════════════════════════════════════════════════
+async function deriveKey(password, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['decrypt']
+  );
+}
+
+function b64ToBuffer(b64) {
+  const bin = atob(b64);
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return buf;
+}
+
+async function decryptData(encObj, password) {
+  const salt      = b64ToBuffer(encObj.salt);
+  const iv        = b64ToBuffer(encObj.iv);
+  const tag       = b64ToBuffer(encObj.tag);
+  const encrypted = b64ToBuffer(encObj.data);
+  // GCM: ciphertext + tag are concatenated for SubtleCrypto
+  const cipherAndTag = new Uint8Array(encrypted.length + tag.length);
+  cipherAndTag.set(encrypted);
+  cipherAndTag.set(tag, encrypted.length);
+  const key = await deriveKey(password, salt);
+  const decrypted = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    cipherAndTag
+  );
+  return new TextDecoder().decode(decrypted);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ACCESS + DATA LOADING
+// ══════════════════════════════════════════════════════════════════════════
+let loadedPapers = [];   // decrypted & parsed question bank
+
+async function tryAccess() {
+  const code = document.getElementById('code-in').value.trim().toUpperCase();
+  const cfg = CODES[code];
+  if (!cfg) {
+    document.getElementById('gate-err').textContent = '访问码无效，请检查购买确认邮件';
+    document.getElementById('code-in').style.borderColor = '#e05a50';
+    setTimeout(() => document.getElementById('code-in').style.borderColor = '', 1800);
+    return;
+  }
+
+  // Show loading state
+  const btn = document.getElementById('gate-btn');
+  btn.disabled = true;
+  btn.textContent = '加载中…';
+  document.getElementById('gate-err').textContent = '';
+  document.getElementById('gate-loading').classList.add('show');
+
+  try {
+    const url = DATA_BASE_URL + cfg.file + '.enc';
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const encObj = await resp.json();
+    const plaintext = await decryptData(encObj, cfg.key);
+    loadedPapers = JSON.parse(plaintext);
+
+    curUser = cfg.label;
+    ['user-tag', 'quiz-user-tag', 'res-user-tag'].forEach(
+      id => document.getElementById(id).textContent = curUser
+    );
+    buildHomeGrids();
+    showScreen('home');
+  } catch (err) {
+    console.error(err);
+    document.getElementById('gate-err').textContent = '加载失败，请检查网络连接后重试';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '进入系统';
+    document.getElementById('gate-loading').classList.remove('show');
+  }
+}
+
+document.getElementById('code-in').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryAccess();
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// HOME GRIDS
+// ══════════════════════════════════════════════════════════════════════════
+const ALL_SECTIONS = [
+  {lo:'LO1',  title:'Agent Services & CMP'},
+  {lo:'LO2',  title:'Market Appraisal'},
+  {lo:'LO3',  title:'Marketing & Tenancy Types'},
+  {lo:'LO4',  title:'Inventory, Check-in & Deposits'},
+  {lo:'LO5',  title:'Safety & EPC'},
+  {lo:'LO6',  title:'HMO'},
+  {lo:'LO7',  title:'References & Tenant Selection'},
+  {lo:'LO8',  title:'Tenancy Documentation'},
+  {lo:'LO9',  title:'Rent Management & Arrears'},
+  {lo:'LO10', title:'Tenancy Extensions & Renewals'},
+  {lo:'LO11', title:'Ending Tenancies'},
+  {lo:'LO12', title:'Repairs & Maintenance'},
+];
+
+function getAllQuestions() {
+  return loadedPapers.flatMap(p => p.questions || []);
+}
+
+function getSectionQuestions(lo) {
+  const target = lo.toUpperCase();
+  return getAllQuestions().filter(q => {
+    if (!q.lo) return false;
+    const qlo = q.lo.toUpperCase();
+    return qlo === target || qlo.startsWith(target + '.') || qlo.startsWith(target + ' ');
+  });
+}
+
+function buildHomeGrids() {
+  const allQ = getAllQuestions();
+  const totalPapers = loadedPapers.length;
+  const totalQ = allQ.length;
+
+  document.getElementById('stat-papers').textContent = totalPapers;
+  document.getElementById('stat-questions').textContent = totalQ;
+
+  // Paper grid
+  const pg = document.getElementById('paper-grid');
+  pg.innerHTML = '';
+  loadedPapers.forEach(p => {
+    const qcount = (p.questions || []).length;
+    const div = document.createElement('div');
+    div.className = 'pc';
+    div.innerHTML = `
+      <div class="pc-num">MOCK PAPER</div>
+      <div class="pc-title">Paper ${String(p.id).padStart(2,'0')}</div>
+      <div class="pc-meta">${p.desc || ''}</div>
+      <div class="pc-count">${qcount}题</div>
+      <div class="pc-badge live">已上线</div>`;
+    div.onclick = () => startPaper(p);
+    pg.appendChild(div);
+  });
+
+  // Section grid
+  const sg = document.getElementById('section-grid');
+  sg.innerHTML = '';
+  ALL_SECTIONS.forEach(s => {
+    const qs = getSectionQuestions(s.lo);
+    const div = document.createElement('div');
+    div.className = 'sc' + (qs.length === 0 ? ' empty' : '');
+    div.innerHTML = `
+      <div class="sc-lo">${s.lo}</div>
+      <div class="sc-title">${s.title}</div>
+      <div class="sc-count">${qs.length}题</div>`;
+    if (qs.length > 0) div.onclick = () => startSection(s, qs);
+    sg.appendChild(div);
+  });
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) =>
+    b.classList.toggle('active', ['papers','sections'][i] === tab));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SHUFFLE
+// ══════════════════════════════════════════════════════════════════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function shuffleQuestion(q) {
+  const qc = {...q};
+  if ((q.type === 'single' || q.type === 'multi') && q.opts) {
+    const newOrder = shuffle([...Array(q.opts.length).keys()]);
+    qc.opts = newOrder.map(i => q.opts[i]);
+    const rev = {};
+    newOrder.forEach((orig, ni) => rev[orig] = ni);
+    qc.correct = q.correct.map(c => rev[c]);
+    if (q.optExpl) qc.optExpl = newOrder.map(i => q.optExpl[i]);
+  }
+  return qc;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// TIMER
+// ══════════════════════════════════════════════════════════════════════════
+const EXAM_SECS = 45 * 60;
+let timerInterval = null, elapsedSecs = 0, isOvertime = false;
+function startTimer() {
+  elapsedSecs = 0; isOvertime = false; updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    elapsedSecs++;
+    updateTimerDisplay();
+    if (elapsedSecs === EXAM_SECS && !isOvertime) {
+      isOvertime = true;
+      document.getElementById('overtime-banner').style.display = 'block';
+      document.getElementById('timer').classList.add('overtime');
+    }
+  }, 1000);
+}
+function stopTimer() { clearInterval(timerInterval); timerInterval = null; }
+function updateTimerDisplay() {
+  const remaining = EXAM_SECS - elapsedSecs;
+  const el = document.getElementById('timer');
+  if (remaining > 0) {
+    const m = Math.floor(remaining / 60), s = remaining % 60;
+    el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    el.className = 'timer-display' + (remaining <= 300 ? ' warning' : '');
+  } else {
+    const over = elapsedSecs - EXAM_SECS, m = Math.floor(over / 60), s = over % 60;
+    el.textContent = `+${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    el.className = 'timer-display overtime';
+  }
+}
+function formatTime(secs) {
+  const m = Math.floor(secs / 60), s = secs % 60;
+  return `${m}分${String(s).padStart(2,'0')}秒`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// QUIZ STATE
+// ══════════════════════════════════════════════════════════════════════════
+let currentPaper = [], shuffledPaper = [], currentPaperName = '';
+let idx = 0, score = {c:0, w:0}, answered = false;
+let selOpts = new Set(), matchSels = {}, fillSels = {};
+let flaggedQs = new Set();
+
+function startPaper(p) {
+  currentPaper = p.questions || [];
+  currentPaperName = `Mock Paper ${String(p.id).padStart(2,'0')}`;
+  initQuiz();
+  showScreen('quiz');
+}
+function startSection(s, qs) {
+  currentPaper = qs;
+  currentPaperName = `${s.lo} · ${s.title}`;
+  initQuiz();
+  showScreen('quiz');
+}
+
+function initQuiz() {
+  shuffledPaper = shuffle(currentPaper).map(shuffleQuestion);
+  idx = 0; score = {c:0, w:0}; flaggedQs = new Set(); answered = false;
+  document.getElementById('paper-tag-txt').textContent = currentPaperName;
+  document.getElementById('qtot').textContent = shuffledPaper.length;
+  document.getElementById('sr').textContent = shuffledPaper.length;
+  document.getElementById('sc').textContent = '0';
+  document.getElementById('sw').textContent = '0';
+  document.getElementById('sf').textContent = '0';
+  document.getElementById('prog').style.width = '0%';
+  document.getElementById('overtime-banner').style.display = 'none';
+  startTimer();
+  renderQ();
+}
+
+function renderQ() {
+  if (idx >= shuffledPaper.length) { stopTimer(); showResults(); return; }
+  answered = false; selOpts = new Set(); matchSels = {}; fillSels = {};
+  const q = shuffledPaper[idx];
+  document.getElementById('qcur').textContent = idx + 1;
+  document.getElementById('sr').textContent = shuffledPaper.length - idx;
+  document.getElementById('prog').style.width = ((idx / shuffledPaper.length) * 100) + '%';
+
+  const typeMap = {single:'Single Best Answer', multi:'Multi-select', match:'Match', fill:'Fill in Blanks'};
+  const typeClass = {single:'single', multi:'multi', match:'match', fill:'fill'};
+  const isFlagged = flaggedQs.has(q.id);
+
+  let body = '';
+  if (q.type === 'single' || q.type === 'multi') {
+    const ms = q.type === 'multi' ? ' multi-style' : '';
+    body = `<div class="opts">${q.opts.map((o,i) =>
+      `<button class="opt${ms}" id="opt${i}" onclick="pickOpt(${i})">
+        <span class="opt-l">${String.fromCharCode(65+i)}</span><span>${o}</span>
+      </button>`).join('')}</div>`;
+  } else if (q.type === 'match') {
+    const co = q.cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    body = `<div class="match-wrap">${q.rows.map((r,i) =>
+      `<div class="match-row" id="mr${i}">
+        <div class="match-left">${r.left}</div>
+        <select class="match-sel" id="ms${i}" onchange="matchSel(${i},this.value)">
+          <option value="">— select —</option>${co}
+        </select>
+      </div>`).join('')}</div>`;
+  } else if (q.type === 'fill') {
+    body = `<div class="fill-wrap">${q.blanks.map((b,bi) => {
+      const parts = b.sentence.split('___');
+      let h = `<div class="fill-row"><div class="fill-sent">`;
+      parts.forEach((p,pi) => {
+        h += p;
+        if (pi < b.answers.length) {
+          const ops = b.opts[pi].map(o => `<option value="${o}">${o}</option>`).join('');
+          h += `<select class="blank-sel" id="bs${bi}_${pi}" onchange="fillSel(${bi},${pi},this.value)"><option value="">___</option>${ops}</select>`;
+        }
+      });
+      h += `</div></div>`;
+      return h;
+    }).join('')}</div>`;
+  }
+
+  const instr =
+    q.type === 'multi' ? '<div class="qinstr">Select all that apply — there may be more than one correct answer.</div>' :
+    q.type === 'match' ? '<div class="qinstr">For each item, select the correct category.</div>' :
+    q.type === 'fill'  ? '<div class="qinstr">Select the correct word for each blank.</div>' : '';
+
+  document.getElementById('qcard').innerHTML = `
+    <div class="qmeta">
+      <span class="qnum">Q${idx+1}</span>
+      <span class="qtype-badge ${typeClass[q.type]}">${typeMap[q.type]}</span>
+      <span class="qlo">${q.lo}</span>
+      <button class="flag-btn${isFlagged?' flagged':''}" id="flag-btn" onclick="toggleFlag()">
+        ${isFlagged ? '🚩 Flagged' : '⚑ Flag'}
+      </button>
+    </div>
+    <div class="qtxt">${q.text}</div>
+    ${instr}${body}
+    <div class="exp" id="exp"></div>`;
+
+  document.getElementById('action-area').innerHTML = `
+    <div class="btn-row">
+      <button class="submit-btn" id="sbtn" onclick="submitQ()" disabled>Confirm Answer</button>
+      <button class="finish-btn" onclick="confirmFinish()">End Quiz</button>
+    </div>`;
+}
+
+function toggleFlag() {
+  const q = shuffledPaper[idx];
+  if (flaggedQs.has(q.id)) flaggedQs.delete(q.id); else flaggedQs.add(q.id);
+  document.getElementById('sf').textContent = flaggedQs.size;
+  const btn = document.getElementById('flag-btn');
+  const f = flaggedQs.has(q.id);
+  btn.textContent = f ? '🚩 Flagged' : '⚑ Flag';
+  btn.classList.toggle('flagged', f);
+}
+
+function pickOpt(i) {
+  if (answered) return;
+  if (shuffledPaper[idx].type === 'single') {
+    selOpts.clear(); selOpts.add(i);
+    document.querySelectorAll('.opt').forEach((b,j) => b.classList.toggle('sel', j===i));
+  } else {
+    if (selOpts.has(i)) { selOpts.delete(i); document.getElementById('opt'+i).classList.remove('sel'); }
+    else { selOpts.add(i); document.getElementById('opt'+i).classList.add('sel'); }
+  }
+  document.getElementById('sbtn').disabled = selOpts.size === 0;
+}
+function matchSel(i, v) {
+  if (answered) return;
+  matchSels[i] = v;
+  const allFilled = shuffledPaper[idx].rows.every((_,ri) => matchSels[ri] && matchSels[ri] !== '');
+  document.getElementById('sbtn').disabled = !allFilled;
+}
+function fillSel(bi, pi, v) {
+  if (answered) return;
+  if (!fillSels[bi]) fillSels[bi] = {};
+  fillSels[bi][pi] = v;
+  const q = shuffledPaper[idx];
+  const allFilled = q.blanks.every((b,bii) => b.answers.every((_,pii) => fillSels[bii] && fillSels[bii][pii]));
+  document.getElementById('sbtn').disabled = !allFilled;
+}
+
+function submitQ() {
+  if (answered) return;
+  answered = true;
+  const q = shuffledPaper[idx];
+  let correct = false;
+
+  if (q.type === 'single' || q.type === 'multi') {
+    const cs = new Set(q.correct);
+    correct = selOpts.size === cs.size && [...selOpts].every(x => cs.has(x));
+    document.querySelectorAll('.opt').forEach((btn, i) => {
+      btn.disabled = true;
+      if (cs.has(i)) { btn.classList.add('correct'); btn.classList.remove('sel'); }
+      else if (selOpts.has(i) && !cs.has(i)) { btn.classList.add('wrong'); btn.classList.remove('sel'); }
+    });
+  } else if (q.type === 'match') {
+    let ok = true;
+    q.rows.forEach((r, i) => {
+      const row = document.getElementById('mr'+i);
+      document.getElementById('ms'+i).disabled = true;
+      if (matchSels[i] === r.correct) { row.classList.add('correct'); }
+      else {
+        row.classList.add('wrong'); ok = false;
+        const tag = document.createElement('span');
+        tag.className = 'match-ans-tag';
+        tag.textContent = '✓ ' + r.correct;
+        row.appendChild(tag);
+      }
+    });
+    correct = ok;
+  } else if (q.type === 'fill') {
+    let ok = true;
+    q.blanks.forEach((b, bi) => {
+      b.answers.forEach((ans, pi) => {
+        const el = document.getElementById(`bs${bi}_${pi}`);
+        el.disabled = true;
+        const ua = fillSels[bi] && fillSels[bi][pi];
+        if (ua === ans) el.classList.add('ok');
+        else { el.classList.add('bad'); ok = false; }
+      });
+    });
+    correct = ok;
+  }
+
+  if (correct) score.c++; else score.w++;
+  document.getElementById('sc').textContent = score.c;
+  document.getElementById('sw').textContent = score.w;
+  if (flaggedQs.has(q.id)) { flaggedQs.delete(q.id); document.getElementById('sf').textContent = flaggedQs.size; }
+
+  let breakdownHTML = '';
+  if ((q.type === 'single' || q.type === 'multi') && q.optExpl) {
+    breakdownHTML = `<div class="exp-breakdown"><div class="exp-bd-title">Option breakdown</div>
+      ${q.opts.map((o,i) => {
+        const isC = new Set(q.correct).has(i);
+        return `<div class="exp-opt-row">
+          <span class="exp-opt-l ${isC?'c':'w'}">${String.fromCharCode(65+i)}</span>
+          <span><strong>${o}</strong>${q.optExpl[i] ? ` — ${q.optExpl[i]}` : ''}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  const exp = document.getElementById('exp');
+  exp.innerHTML = `
+    <div class="exp-header">
+      <div class="exp-result ${correct?'pass':'fail'}">${correct ? '✓ CORRECT' : '✗ INCORRECT'}</div>
+      <div class="exp-tags">
+        <span class="exp-tag lo">${q.lo}</span>
+        ${q.section ? `<span class="exp-tag section">${q.section}</span>` : ''}
+      </div>
+    </div>
+    <div class="exp-ans">Correct answer: ${q.ans}</div>
+    ${breakdownHTML}
+    <div class="exp-txt">${q.expl}</div>
+    ${q.key  ? `<div class="exp-key">${q.key}</div>` : ''}
+    ${q.ref  ? `<div class="exp-ref">📖 ${q.ref}</div>` : ''}`;
+  exp.classList.add('show');
+
+  document.getElementById('action-area').innerHTML = `
+    <button class="next-btn" onclick="nextQ()">
+      ${idx < shuffledPaper.length - 1 ? 'Next Question →' : 'View Results →'}
+    </button>`;
+  flashWM();
+}
+
+function nextQ() { idx++; renderQ(); }
+
+function confirmFinish() {
+  const rem = shuffledPaper.length - idx - 1;
+  if (confirm(`End quiz now?\n\nAnswered: ${idx} / ${shuffledPaper.length}\nUnanswered: ${rem}`)) {
+    stopTimer(); showResults();
+  }
+}
+function confirmGoHome() {
+  if (confirm('Return to home? Progress will be lost.')) { stopTimer(); showScreen('home'); }
+}
+
+function showResults() {
+  stopTimer();
+  const answeredCount = score.c + score.w;
+  const totalPct = Math.round((score.c / shuffledPaper.length) * 100);
+  let emoji, grade, msg;
+  if (totalPct >= 80) { emoji = '🏆'; grade = 'Excellent'; msg = 'Outstanding result. You\'re well-prepared for the real exam.'; }
+  else if (totalPct >= 65) { emoji = '📚'; grade = 'Good'; msg = 'Solid performance. Focus on the questions you got wrong.'; }
+  else { emoji = '💪'; grade = 'Keep Practising'; msg = 'These wrong answers are exactly what the exam targets. Review the explanations carefully.'; }
+
+  const timeStr = formatTime(elapsedSecs);
+  const overtimeStr = isOvertime
+    ? `<div class="res-overtime">⏱ Completed in ${timeStr} — over the 45-minute standard</div>`
+    : `<div class="res-time">✓ Completed in ${timeStr}</div>`;
+
+  let flaggedHTML = '';
+  if (flaggedQs.size > 0) {
+    const items = [...flaggedQs].map(fid => {
+      const fq = shuffledPaper.find(q => q.id === fid);
+      return fq ? `<div class="flagged-item">Q${shuffledPaper.indexOf(fq)+1} · ${fq.lo}</div>` : '';
+    }).join('');
+    flaggedHTML = `<div class="flagged-list"><h3>🚩 Flagged (not answered)</h3>${items}</div>`;
+  }
+
+  document.getElementById('results-body').innerHTML = `
+    <div class="res-icon">${emoji}</div>
+    <div class="res-title">${grade}</div>
+    <div class="res-pct">${totalPct}%</div>
+    ${overtimeStr}
+    <div class="res-grid">
+      <div class="rg-i"><div class="rg-n g">${score.c}</div><div class="rg-l">Correct</div></div>
+      <div class="rg-i"><div class="rg-n r">${score.w}</div><div class="rg-l">Incorrect</div></div>
+      <div class="rg-i"><div class="rg-n a">${shuffledPaper.length - answeredCount}</div><div class="rg-l">Skipped</div></div>
+      <div class="rg-i"><div class="rg-n" style="color:var(--gold)">${shuffledPaper.length}</div><div class="rg-l">Total</div></div>
+    </div>
+    <div class="res-msg">${msg}</div>
+    ${flaggedHTML}
+    <div class="res-actions">
+      <button class="res-btn-pri" onclick="initQuiz();showScreen('quiz')">🔄 Retake (shuffled)</button>
+      <button class="res-btn-sec" onclick="showScreen('home')">← Back to Papers</button>
+    </div>`;
+  showScreen('results');
+}
+</script>
+</body>
+</html>
