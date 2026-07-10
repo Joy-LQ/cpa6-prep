@@ -200,8 +200,11 @@ html,body{min-height:100%;background:var(--cream);font-family:'DM Sans',sans-ser
 .flash-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.2rem 1rem 2rem;overflow:hidden;}
 .flash-progress{font-family:'DM Mono',monospace;font-size:.78rem;color:rgba(24,18,10,.45);margin-bottom:1rem;letter-spacing:1px;}
 .flash-stage{width:100%;max-width:520px;perspective:1400px;touch-action:pan-y;}
-.flash-card{position:relative;width:100%;min-height:340px;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,.1,.2,1);cursor:pointer;}
+.flash-card{position:relative;width:100%;height:clamp(360px,58vh,460px);transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,.1,.2,1);cursor:pointer;}
 .flash-card.flipped{transform:rotateY(180deg);}
+.flash-card.fly-left{transition:transform .32s ease,opacity .32s ease;transform:translateX(-120%) rotate(-7deg);opacity:0;}
+.flash-card.fly-right{transition:transform .32s ease,opacity .32s ease;transform:translateX(120%) rotate(7deg);opacity:0;}
+.ff-scroll{overflow-y:auto;max-height:100%;padding-bottom:1.6rem;-webkit-overflow-scrolling:touch;}
 .flash-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:22px;padding:1.8rem 1.5rem;display:flex;flex-direction:column;box-shadow:0 10px 34px var(--shadow);}
 .flash-front{background:var(--parchment);border:1.5px solid var(--gold-pale);align-items:center;justify-content:center;text-align:center;}
 .flash-back{background:var(--ink);color:#f2ece0;transform:rotateY(180deg);justify-content:center;}
@@ -338,15 +341,18 @@ html,body{min-height:100%;background:var(--cream);font-family:'DM Sans',sans-ser
       <button class="back-btn" onclick="exitFlash()">← 返回</button>
       <div class="qh-brand">CPA6 Prep</div>
     </div>
-    <div class="qh-badge" id="flash-sec-tag">Section</div>
+    <div class="qh-left">
+      <button class="back-btn" id="flash-lang-btn" onclick="toggleFlashLang()">中文</button>
+      <div class="qh-badge" id="flash-sec-tag">Section</div>
+    </div>
   </header>
   <div class="flash-body">
     <div class="flash-progress" id="flash-progress">1 / 20</div>
     <div class="flash-stage" id="flash-stage"></div>
     <div class="flash-nav">
-      <button class="fn-btn" id="fn-prev" onclick="flashNav(-1)">← 上一张</button>
-      <button class="fn-btn" onclick="flashShuffle()">🔀 打乱</button>
-      <button class="fn-btn pri" id="fn-next" onclick="flashNav(1)">下一张 →</button>
+      <button class="fn-btn" id="fn-again" onclick="flashMark(false)">✗ 没掌握</button>
+      <button class="fn-btn" onclick="flashShuffle()" style="flex:0 0 64px">🔀</button>
+      <button class="fn-btn pri" id="fn-got" onclick="flashMark(true)">✓ 掌握</button>
     </div>
   </div>
 </div>
@@ -590,74 +596,153 @@ function buildCardsGrid() {
     cg.innerHTML = '<div class="cards-locked">🃏 知识卡片随章节陆续上线，付费访问码可解锁全部卡片。</div>';
     return;
   }
+  const done = masteredSet();
   loadedCards.forEach(sec => {
+    const got = sec.cards.filter(c => done.has(c.id)).length;
     const div = document.createElement('div');
     div.className = 'sc';
     div.innerHTML = `
       <div class="sc-lo">FLASHCARDS</div>
       <div class="sc-title">${sec.section}</div>
-      <div class="sc-count">${sec.cards.length} 张卡片</div>`;
+      <div class="sc-count">${sec.cards.length} 张卡片${got ? ` · ✓已掌握 ${got}` : ''}</div>`;
     div.onclick = () => startCards(sec);
     cg.appendChild(div);
   });
 }
 
-function startCards(sec) {
+// 语言：en / zh（localStorage 记忆偏好）
+let flashLang = localStorage.getItem('cpa6_cards_lang') || 'en';
+let flashGotThisRound = 0;
+
+function toggleFlashLang() {
+  flashLang = flashLang === 'en' ? 'zh' : 'en';
+  localStorage.setItem('cpa6_cards_lang', flashLang);
+  updateLangBtn();
+  if (flashDeck.length) renderFlash(false);
+}
+function updateLangBtn() {
+  const b = document.getElementById('flash-lang-btn');
+  if (b) b.textContent = flashLang === 'en' ? '中文' : 'EN';
+}
+
+// 掌握进度（按卡片 id 持久化）
+function masteredSet() {
+  try { return new Set(JSON.parse(localStorage.getItem('cpa6_cards_mastered') || '[]')); }
+  catch (e) { return new Set(); }
+}
+function saveMastered(set) {
+  localStorage.setItem('cpa6_cards_mastered', JSON.stringify([...set]));
+}
+
+function startCards(sec, includeMastered = false) {
   flashSec = sec;
-  flashDeck = [...sec.cards];
-  flashIdx = 0;
+  const done = masteredSet();
+  flashDeck = includeMastered ? [...sec.cards] : sec.cards.filter(c => !done.has(c.id));
+  flashGotThisRound = 0;
   document.getElementById('flash-sec-tag').textContent = sec.section.replace(' — ', ' · ');
-  renderFlash(false);
+  updateLangBtn();
   showScreen('flash');
+  if (flashDeck.length === 0) { renderFlashDone(true); return; }
+  renderFlash(false);
+}
+
+function cardText(c) {
+  if (flashLang === 'zh' && c.front_zh) {
+    return { front: c.front_zh, back: c.back_zh || c.back, key: c.key_zh || c.key };
+  }
+  return { front: c.front, back: c.back, key: c.key };
 }
 
 function renderFlash(showBack) {
-  const c = flashDeck[flashIdx];
-  document.getElementById('flash-progress').textContent = `${flashIdx + 1} / ${flashDeck.length}`;
+  const c = flashDeck[0];
+  const t = cardText(c);
+  const done = masteredSet();
+  const secTotal = flashSec.cards.length;
+  document.getElementById('flash-progress').textContent =
+    `本轮剩余 ${flashDeck.length} · 已掌握 ${[...done].filter(id => flashSec.cards.some(x => x.id === id)).length} / ${secTotal}`;
   const stage = document.getElementById('flash-stage');
   stage.innerHTML = `
     <div class="flash-card${showBack ? ' flipped' : ''}" id="flash-card" onclick="this.classList.toggle('flipped')">
       <div class="flash-face flash-front">
         <span class="ff-id">${c.id || ''}</span>
-        <div class="ff-label">Question</div>
-        <div class="ff-q">${c.front}</div>
-        <div class="ff-hint">点击翻面查看答案</div>
+        <div class="ff-scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;">
+          <div class="ff-label">Question</div>
+          <div class="ff-q">${t.front}</div>
+        </div>
+        <div class="ff-hint">点击翻面 · ←左滑=掌握 · 右滑→=没掌握</div>
       </div>
       <div class="flash-face flash-back">
         <span class="ff-id">${c.id || ''}</span>
-        <div class="ff-label">Answer</div>
-        <div class="ff-a">${c.back}</div>
-        ${c.key ? `<div class="ff-key">🔑 ${c.key}</div>` : ''}
-        ${c.ref ? `<div class="ff-ref">📖 ${c.ref}</div>` : ''}
+        <div class="ff-scroll">
+          <div class="ff-label">Answer</div>
+          <div class="ff-a">${t.back}</div>
+          ${t.key ? `<div class="ff-key">🔑 ${t.key}</div>` : ''}
+          ${c.ref ? `<div class="ff-ref">📖 ${c.ref}</div>` : ''}
+        </div>
         <div class="ff-hint">点击翻回正面</div>
       </div>
     </div>`;
-  document.getElementById('fn-prev').disabled = flashIdx === 0;
-  document.getElementById('fn-next').textContent = flashIdx === flashDeck.length - 1 ? '完成 ✓' : '下一张 →';
+  document.getElementById('fn-again').style.display = '';
+  document.getElementById('fn-got').style.display = '';
   attachSwipe(stage);
   flashWM();
 }
 
-function flashNav(dir) {
-  if (dir > 0 && flashIdx === flashDeck.length - 1) { exitFlash(); return; }
-  const next = flashIdx + dir;
-  if (next < 0 || next >= flashDeck.length) return;
-  flashIdx = next;
-  renderFlash(false);
+// 掌握判定：got=true → 记入已掌握并移出本轮；got=false → 排到队尾再来
+function flashMark(got) {
+  if (!flashDeck.length) return;
+  const fc = document.getElementById('flash-card');
+  if (fc) fc.classList.add(got ? 'fly-left' : 'fly-right');
+  setTimeout(() => {
+    const c = flashDeck.shift();
+    if (got) {
+      const done = masteredSet(); done.add(c.id); saveMastered(done);
+      flashGotThisRound++;
+    } else {
+      flashDeck.push(c);
+    }
+    if (flashDeck.length === 0) renderFlashDone(false);
+    else renderFlash(false);
+  }, 300);
+}
+
+function renderFlashDone(alreadyDone) {
+  const secTotal = flashSec.cards.length;
+  document.getElementById('flash-progress').textContent = `${secTotal} / ${secTotal}`;
+  document.getElementById('flash-stage').innerHTML = `
+    <div class="flash-card">
+      <div class="flash-face flash-front" style="justify-content:center;">
+        <div class="flash-done">
+          <div class="res-icon">🎉</div>
+          <div class="ff-q" style="margin:.8rem 0;">${alreadyDone ? '本章卡片已全部掌握' : '本轮完成！全部掌握'}</div>
+          <div style="font-size:.8rem;color:rgba(24,18,10,.5);line-height:1.7;">${flashSec.section}<br>${secTotal} 张卡片 ✓</div>
+          <button class="fn-btn" style="margin-top:1.2rem;" onclick="resetSectionCards()">🔄 重置本章进度，重新复习</button>
+        </div>
+      </div>
+      <div class="flash-face flash-back"></div>
+    </div>`;
+  document.getElementById('fn-again').style.display = 'none';
+  document.getElementById('fn-got').style.display = 'none';
+}
+
+function resetSectionCards() {
+  const done = masteredSet();
+  flashSec.cards.forEach(c => done.delete(c.id));
+  saveMastered(done);
+  startCards(flashSec);
 }
 
 function flashShuffle() {
-  flashDeck = shuffle(flashDeck);
-  flashIdx = 0;
-  renderFlash(false);
+  if (flashDeck.length > 1) { flashDeck = shuffle(flashDeck); renderFlash(false); }
 }
 
 function exitFlash() {
   showScreen('home');
   switchTab('cards');
+  buildCardsGrid();
 }
 
-// 触摸滑动：左滑下一张，右滑上一张
+// 触摸滑动：左滑=掌握，右滑=没掌握
 function attachSwipe(el) {
   let x0 = null, y0 = null;
   el.ontouchstart = e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; };
@@ -665,16 +750,16 @@ function attachSwipe(el) {
     if (x0 === null) return;
     const dx = e.changedTouches[0].clientX - x0;
     const dy = e.changedTouches[0].clientY - y0;
-    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) flashNav(dx < 0 ? 1 : -1);
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) flashMark(dx < 0);
     x0 = y0 = null;
   };
 }
 
-// 键盘：← → 切换，空格/回车翻面
+// 键盘：←=掌握 →=没掌握，空格/回车翻面
 document.addEventListener('keydown', e => {
   if (!document.getElementById('screen-flash').classList.contains('active')) return;
-  if (e.key === 'ArrowRight') flashNav(1);
-  else if (e.key === 'ArrowLeft') flashNav(-1);
+  if (e.key === 'ArrowLeft') flashMark(true);
+  else if (e.key === 'ArrowRight') flashMark(false);
   else if (e.key === ' ' || e.key === 'Enter') {
     e.preventDefault();
     const fc = document.getElementById('flash-card');
