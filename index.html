@@ -786,7 +786,7 @@ function submitQ() {
         ${q.section ? `<span class="exp-tag section">${q.section}</span>` : ''}
       </div>
     </div>
-    <div class="exp-ans">Correct answer: ${q.ans}</div>
+    <div class="exp-ans">Correct answer: ${(q.type==='single'||q.type==='multi') && Array.isArray(q.correct) ? q.correct.slice().sort((a,b)=>a-b).map(i=>String.fromCharCode(65+i)).join(', ') : q.ans}</div>
     ${breakdownHTML}
     <div class="exp-txt">${q.expl}</div>
     ${q.key  ? `<div class="exp-key">${q.key}</div>` : ''}
