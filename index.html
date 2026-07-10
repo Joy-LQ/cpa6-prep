@@ -194,6 +194,34 @@ html,body{min-height:100%;background:var(--cream);font-family:'DM Sans',sans-ser
 .res-btn-sec:hover{border-color:var(--gold);}
 .wm{position:fixed;inset:0;pointer-events:none;z-index:9999;display:flex;align-items:center;justify-content:center;transform:rotate(-30deg);opacity:0;transition:opacity .3s;}
 .wm span{font-family:'DM Mono',monospace;font-size:12px;color:rgba(180,130,80,.15);letter-spacing:2px;white-space:nowrap;}
+
+/* FLASHCARDS */
+#screen-flash{flex-direction:column;background:var(--cream);}
+.flash-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.2rem 1rem 2rem;overflow:hidden;}
+.flash-progress{font-family:'DM Mono',monospace;font-size:.78rem;color:rgba(24,18,10,.45);margin-bottom:1rem;letter-spacing:1px;}
+.flash-stage{width:100%;max-width:520px;perspective:1400px;touch-action:pan-y;}
+.flash-card{position:relative;width:100%;min-height:340px;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,.1,.2,1);cursor:pointer;}
+.flash-card.flipped{transform:rotateY(180deg);}
+.flash-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:22px;padding:1.8rem 1.5rem;display:flex;flex-direction:column;box-shadow:0 10px 34px var(--shadow);}
+.flash-front{background:var(--parchment);border:1.5px solid var(--gold-pale);align-items:center;justify-content:center;text-align:center;}
+.flash-back{background:var(--ink);color:#f2ece0;transform:rotateY(180deg);justify-content:center;}
+.ff-label{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:1rem;}
+.ff-id{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(24,18,10,.3);position:absolute;top:1rem;right:1.2rem;}
+.flash-back .ff-id{color:rgba(255,255,255,.25);}
+.ff-q{font-size:1.02rem;line-height:1.7;font-weight:600;}
+.ff-a{font-size:.9rem;line-height:1.75;}
+.ff-key{margin-top:1rem;padding:.55rem .8rem;background:rgba(180,130,80,.22);border-radius:9px;font-size:.8rem;line-height:1.6;color:var(--gold-light);}
+.ff-ref{margin-top:.7rem;font-size:.68rem;font-family:'DM Mono',monospace;color:rgba(255,255,255,.35);}
+.ff-hint{position:absolute;bottom:.9rem;left:0;right:0;text-align:center;font-size:.66rem;color:rgba(24,18,10,.3);}
+.flash-back .ff-hint{color:rgba(255,255,255,.28);}
+.flash-nav{display:flex;gap:.6rem;margin-top:1.4rem;width:100%;max-width:520px;}
+.fn-btn{flex:1;background:var(--parchment);border:1.5px solid var(--gold-pale);border-radius:12px;padding:.8rem;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;color:var(--ink);cursor:pointer;transition:all .18s;}
+.fn-btn:hover:not(:disabled){border-color:var(--gold);}
+.fn-btn:disabled{opacity:.3;cursor:not-allowed;}
+.fn-btn.pri{background:var(--gold);border-color:var(--gold);}
+.flash-done{text-align:center;padding:2rem 1rem;}
+.flash-done .res-icon{font-size:2.8rem;}
+.cards-locked{max-width:420px;margin:0 auto;padding:1.4rem;text-align:center;font-size:.85rem;color:rgba(24,18,10,.5);line-height:1.7;}
 </style>
 </head>
 <body>
@@ -235,6 +263,7 @@ html,body{min-height:100%;background:var(--cream);font-family:'DM Sans',sans-ser
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab('papers')">📋 按套刷题</button>
       <button class="tab-btn" onclick="switchTab('sections')">📚 按章节刷题</button>
+      <button class="tab-btn" onclick="switchTab('cards')">🃏 知识卡片</button>
     </div>
     <div class="tab-content active" id="tab-papers">
       <div class="sec-label">选择试卷 · Mock Papers — 每套30题 · 45分钟</div>
@@ -243,6 +272,10 @@ html,body{min-height:100%;background:var(--cream);font-family:'DM Sans',sans-ser
     <div class="tab-content" id="tab-sections">
       <div class="sec-label">按章节刷题 · Study by Section</div>
       <div class="section-grid" id="section-grid"></div>
+    </div>
+    <div class="tab-content" id="tab-cards">
+      <div class="sec-label">知识卡片 · Flashcards — 点击翻面 · 左右滑动切换</div>
+      <div class="section-grid" id="cards-grid"></div>
     </div>
     <div class="info-section">
       <div class="info-card">
@@ -296,6 +329,26 @@ html,body{min-height:100%;background:var(--cream);font-family:'DM Sans',sans-ser
     <div class="ah-badge" id="res-user-tag">DEMO</div>
   </header>
   <div class="results-body" id="results-body"></div>
+</div>
+
+<!-- FLASHCARDS -->
+<div class="screen" id="screen-flash">
+  <header class="quiz-header">
+    <div class="qh-left">
+      <button class="back-btn" onclick="exitFlash()">← 返回</button>
+      <div class="qh-brand">CPA6 Prep</div>
+    </div>
+    <div class="qh-badge" id="flash-sec-tag">Section</div>
+  </header>
+  <div class="flash-body">
+    <div class="flash-progress" id="flash-progress">1 / 20</div>
+    <div class="flash-stage" id="flash-stage"></div>
+    <div class="flash-nav">
+      <button class="fn-btn" id="fn-prev" onclick="flashNav(-1)">← 上一张</button>
+      <button class="fn-btn" onclick="flashShuffle()">🔀 打乱</button>
+      <button class="fn-btn pri" id="fn-next" onclick="flashNav(1)">下一张 →</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -416,6 +469,13 @@ async function tryAccess() {
     const plaintext = await decryptData(encObj, cfg.key);
     loadedPapers = JSON.parse(plaintext);
 
+    // 知识卡片（付费密钥可解；DEMO 解不开则静默降级）
+    loadedCards = null;
+    try {
+      const cResp = await fetch(DATA_BASE_URL + 'cards.enc');
+      if (cResp.ok) loadedCards = JSON.parse(await decryptData(await cResp.json(), cfg.key));
+    } catch (e) { loadedCards = null; }
+
     curUser = cfg.label;
     ['user-tag', 'quiz-user-tag', 'res-user-tag'].forEach(
       id => document.getElementById(id).textContent = curUser
@@ -506,14 +566,121 @@ function buildHomeGrids() {
     if (qs.length > 0) div.onclick = () => startSection(s, qs);
     sg.appendChild(div);
   });
+
+  buildCardsGrid();
 }
 
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach((b, i) =>
-    b.classList.toggle('active', ['papers','sections'][i] === tab));
+    b.classList.toggle('active', ['papers','sections','cards'][i] === tab));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+// FLASHCARDS — 知识卡片（数据源：KP 条目库 → cards.enc）
+// ══════════════════════════════════════════════════════════════════════════
+let loadedCards = null;
+let flashDeck = [], flashIdx = 0, flashSec = null;
+
+function buildCardsGrid() {
+  const cg = document.getElementById('cards-grid');
+  cg.innerHTML = '';
+  if (!loadedCards || !loadedCards.length) {
+    cg.innerHTML = '<div class="cards-locked">🃏 知识卡片随章节陆续上线，付费访问码可解锁全部卡片。</div>';
+    return;
+  }
+  loadedCards.forEach(sec => {
+    const div = document.createElement('div');
+    div.className = 'sc';
+    div.innerHTML = `
+      <div class="sc-lo">FLASHCARDS</div>
+      <div class="sc-title">${sec.section}</div>
+      <div class="sc-count">${sec.cards.length} 张卡片</div>`;
+    div.onclick = () => startCards(sec);
+    cg.appendChild(div);
+  });
+}
+
+function startCards(sec) {
+  flashSec = sec;
+  flashDeck = [...sec.cards];
+  flashIdx = 0;
+  document.getElementById('flash-sec-tag').textContent = sec.section.replace(' — ', ' · ');
+  renderFlash(false);
+  showScreen('flash');
+}
+
+function renderFlash(showBack) {
+  const c = flashDeck[flashIdx];
+  document.getElementById('flash-progress').textContent = `${flashIdx + 1} / ${flashDeck.length}`;
+  const stage = document.getElementById('flash-stage');
+  stage.innerHTML = `
+    <div class="flash-card${showBack ? ' flipped' : ''}" id="flash-card" onclick="this.classList.toggle('flipped')">
+      <div class="flash-face flash-front">
+        <span class="ff-id">${c.id || ''}</span>
+        <div class="ff-label">Question</div>
+        <div class="ff-q">${c.front}</div>
+        <div class="ff-hint">点击翻面查看答案</div>
+      </div>
+      <div class="flash-face flash-back">
+        <span class="ff-id">${c.id || ''}</span>
+        <div class="ff-label">Answer</div>
+        <div class="ff-a">${c.back}</div>
+        ${c.key ? `<div class="ff-key">🔑 ${c.key}</div>` : ''}
+        ${c.ref ? `<div class="ff-ref">📖 ${c.ref}</div>` : ''}
+        <div class="ff-hint">点击翻回正面</div>
+      </div>
+    </div>`;
+  document.getElementById('fn-prev').disabled = flashIdx === 0;
+  document.getElementById('fn-next').textContent = flashIdx === flashDeck.length - 1 ? '完成 ✓' : '下一张 →';
+  attachSwipe(stage);
+  flashWM();
+}
+
+function flashNav(dir) {
+  if (dir > 0 && flashIdx === flashDeck.length - 1) { exitFlash(); return; }
+  const next = flashIdx + dir;
+  if (next < 0 || next >= flashDeck.length) return;
+  flashIdx = next;
+  renderFlash(false);
+}
+
+function flashShuffle() {
+  flashDeck = shuffle(flashDeck);
+  flashIdx = 0;
+  renderFlash(false);
+}
+
+function exitFlash() {
+  showScreen('home');
+  switchTab('cards');
+}
+
+// 触摸滑动：左滑下一张，右滑上一张
+function attachSwipe(el) {
+  let x0 = null, y0 = null;
+  el.ontouchstart = e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; };
+  el.ontouchend = e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    const dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) flashNav(dx < 0 ? 1 : -1);
+    x0 = y0 = null;
+  };
+}
+
+// 键盘：← → 切换，空格/回车翻面
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('screen-flash').classList.contains('active')) return;
+  if (e.key === 'ArrowRight') flashNav(1);
+  else if (e.key === 'ArrowLeft') flashNav(-1);
+  else if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    const fc = document.getElementById('flash-card');
+    if (fc) fc.classList.toggle('flipped');
+  }
+});
 
 // ══════════════════════════════════════════════════════════════════════════
 // SHUFFLE
