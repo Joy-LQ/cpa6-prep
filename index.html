@@ -267,6 +267,7 @@ html,body{min-height:100%;background:var(--cream);font-family:'DM Sans',sans-ser
       <button class="tab-btn active" onclick="switchTab('papers')">📋 按套刷题</button>
       <button class="tab-btn" onclick="switchTab('sections')">📚 按章节刷题</button>
       <button class="tab-btn" onclick="switchTab('cards')">🃏 知识卡片</button>
+      <button class="tab-btn" onclick="switchTab('diag')">📊 诊断</button>
     </div>
     <div class="tab-content active" id="tab-papers">
       <div class="sec-label">选择试卷 · Mock Papers — 每套30题 · 45分钟</div>
@@ -279,6 +280,10 @@ html,body{min-height:100%;background:var(--cream);font-family:'DM Sans',sans-ser
     <div class="tab-content" id="tab-cards">
       <div class="sec-label">知识卡片 · Flashcards — 点击翻面 · 左右滑动切换</div>
       <div class="section-grid" id="cards-grid"></div>
+    </div>
+    <div class="tab-content" id="tab-diag">
+      <div class="sec-label">掌握度诊断 · My Weak Points</div>
+      <div class="info-section" id="diag-body"></div>
     </div>
     <div class="info-section">
       <div class="info-card">
@@ -315,6 +320,7 @@ html,body{min-height:100%;background:var(--cream);font-family:'DM Sans',sans-ser
   <div class="quiz-body">
     <div class="quiz-inner">
       <div id="overtime-banner" style="display:none" class="overtime-banner">⏱ 已超过45分钟标准考试时长，继续完成剩余题目</div>
+      <div id="resume-banner" style="display:none" class="overtime-banner" >▶ 已从上次进度继续 <button class="back-btn" style="margin-left:.6rem" onclick="restartQuiz()">↺ 重新开始本卷</button></div>
       <div class="qcard" id="qcard"></div>
       <div class="action-area" id="action-area"></div>
     </div>
@@ -546,6 +552,8 @@ function buildHomeGrids() {
   pg.innerHTML = '';
   loadedPapers.forEach(p => {
     const qcount = (p.questions || []).length;
+    const saved = loadQuizState('paper-' + p.id);
+    const inProgress = saved && saved.nextIdx < (saved.qids || []).length;
     const div = document.createElement('div');
     div.className = 'pc';
     div.innerHTML = `
@@ -553,7 +561,7 @@ function buildHomeGrids() {
       <div class="pc-title">Paper ${String(p.id).padStart(2,'0')}</div>
       <div class="pc-meta">${p.desc || ''}</div>
       <div class="pc-count">${qcount}题</div>
-      <div class="pc-badge live">已上线</div>`;
+      <div class="pc-badge live">${inProgress ? `▶ 进行中 ${saved.nextIdx}/${saved.qids.length}` : '已上线'}</div>`;
     div.onclick = () => startPaper(p);
     pg.appendChild(div);
   });
@@ -578,9 +586,10 @@ function buildHomeGrids() {
 
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach((b, i) =>
-    b.classList.toggle('active', ['papers','sections','cards'][i] === tab));
+    b.classList.toggle('active', ['papers','sections','cards','diag'][i] === tab));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'diag') buildDiagPanel();
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -632,6 +641,111 @@ function masteredSet() {
 }
 function saveMastered(set) {
   localStorage.setItem('cpa6_cards_mastered', JSON.stringify([...set]));
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// 诊断面板 — 薄弱知识点看板（数据源：cpa6_kp_stats + 题目 kp_ids + 卡片）
+// ══════════════════════════════════════════════════════════════════════════
+function kpCardLookup(kp) {
+  if (!loadedCards) return null;
+  for (const sec of loadedCards) {
+    const cs = sec.cards.filter(c => (c.id || '').startsWith(kp));
+    if (cs.length) return { section: sec.section, cards: cs };
+  }
+  return null;
+}
+
+function buildDiagPanel() {
+  const body = document.getElementById('diag-body');
+  const s = kpStats();
+  const kps = Object.keys(s);
+  if (!kps.length) {
+    body.innerHTML = `<div class="info-card"><h3>📊 还没有诊断数据</h3>
+      <p>做带知识点标注的题目（Paper 11、Paper 91 起的 V3 卷）后，每一次作答都会记入你的掌握度账本，这里会出现薄弱知识点分析。旧版卷（01-10）暂不参与统计。</p></div>`;
+    return;
+  }
+  const rows = kps.map(kp => {
+    const { r, w } = s[kp];
+    const total = r + w, acc = Math.round(r / total * 100);
+    const card = kpCardLookup(kp);
+    const label = card ? (card.cards[0].key_zh || card.cards[0].key || kp) : kp;
+    return { kp, r, w, total, acc, card, label };
+  }).sort((a, b) => a.acc - b.acc || b.total - a.total);
+
+  const weak = rows.filter(x => x.acc < 70);
+  const weakQs = collectWeakQuestions(weak.map(x => x.kp));
+
+  let html = `<div class="info-card">
+    <h3>🎯 薄弱知识点（正确率 &lt; 70%）：${weak.length} 个</h3>
+    <p>${weak.length ? '左滑做题右滑翻卡都会更新这里。优先消灭红色条目。' : '当前没有薄弱项，保持手感！'}</p>
+    ${weakQs.length ? `<button class="fn-btn pri" style="width:100%;margin-top:.6rem" onclick="startWeakQuiz()">🎯 只刷薄弱知识点（${weakQs.length} 题）</button>` : ''}
+  </div>`;
+
+  rows.forEach(x => {
+    const color = x.acc < 70 ? 'var(--red)' : (x.acc < 90 ? 'var(--amber)' : 'var(--green)');
+    html += `<div class="info-card" style="padding:.85rem 1.1rem">
+      <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+        <span style="font-family:'DM Mono',monospace;font-size:.68rem;color:rgba(24,18,10,.4)">${x.kp}</span>
+        <span style="font-size:.82rem;font-weight:600;flex:1">${x.label}</span>
+        ${x.card ? `<button class="back-btn" style="color:var(--gold);border-color:var(--gold-pale)" onclick='reviewKPCards(${JSON.stringify(x.kp)})'>🃏 复习卡片</button>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:.7rem;margin-top:.5rem">
+        <div style="flex:1;height:6px;background:rgba(24,18,10,.07);border-radius:3px;overflow:hidden">
+          <div style="width:${x.acc}%;height:100%;background:${color}"></div>
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:.72rem;color:${color}">${x.acc}%</span>
+        <span style="font-size:.68rem;color:rgba(24,18,10,.4)">✓${x.r} ✗${x.w}</span>
+      </div>
+    </div>`;
+  });
+
+  html += `<div class="info-card" style="text-align:center">
+    <button class="back-btn" id="diag-reset" onclick="resetDiag(this)">🗑 清空诊断数据</button>
+  </div>`;
+  body.innerHTML = html;
+}
+
+function collectWeakQuestions(weakKPs) {
+  if (!weakKPs.length) return [];
+  const set = new Set(weakKPs);
+  const qs = [];
+  loadedPapers.forEach(p => (p.questions || []).forEach(q => {
+    if (q.kp_ids && q.kp_ids.some(k => set.has(k))) qs.push(q);
+  }));
+  return qs;
+}
+
+function startWeakQuiz() {
+  const s = kpStats();
+  const weak = Object.keys(s).filter(kp => {
+    const { r, w } = s[kp];
+    return Math.round(r / (r + w) * 100) < 70;
+  });
+  let qs = collectWeakQuestions(weak);
+  if (!qs.length) return;
+  qs = shuffle(qs).slice(0, 15);
+  currentPaper = qs;
+  currentPaperName = `🎯 薄弱专项 · ${qs.length}题`;
+  currentQuizKey = null; // 薄弱专项即时生成，不留断点
+  initQuiz();
+  showScreen('quiz');
+}
+
+function reviewKPCards(kp) {
+  const found = kpCardLookup(kp);
+  if (!found) return;
+  startCards({ section: `${kp} · 定点复习`, cards: found.cards }, true);
+}
+
+function resetDiag(btn) {
+  if (btn.dataset.armed) {
+    localStorage.removeItem('cpa6_kp_stats');
+    buildDiagPanel();
+  } else {
+    btn.dataset.armed = '1';
+    btn.textContent = '⚠️ 再点一次确认清空';
+    setTimeout(() => { btn.dataset.armed = ''; btn.textContent = '🗑 清空诊断数据'; }, 3000);
+  }
 }
 
 function startCards(sec, includeMastered = false) {
@@ -796,8 +910,13 @@ function shuffleQuestion(q) {
 // ══════════════════════════════════════════════════════════════════════════
 const EXAM_SECS = 45 * 60;
 let timerInterval = null, elapsedSecs = 0, isOvertime = false;
-function startTimer() {
-  elapsedSecs = 0; isOvertime = false; updateTimerDisplay();
+function startTimer(offset = 0) {
+  stopTimer();
+  elapsedSecs = offset; isOvertime = offset >= EXAM_SECS; updateTimerDisplay();
+  if (isOvertime) {
+    document.getElementById('overtime-banner').style.display = 'block';
+    document.getElementById('timer').classList.add('overtime');
+  }
   timerInterval = setInterval(() => {
     elapsedSecs++;
     updateTimerDisplay();
@@ -835,32 +954,105 @@ let idx = 0, score = {c:0, w:0}, answered = false;
 let selOpts = new Set(), matchSels = {}, fillSels = {};
 let flaggedQs = new Set();
 
+// ── 进度持久化（localStorage，零后台） ──
+let currentQuizKey = null;
+
+function quizStateKey(k) { return 'cpa6_quiz_' + k; }
+function loadQuizState(k) {
+  try { return JSON.parse(localStorage.getItem(quizStateKey(k)) || 'null'); }
+  catch (e) { return null; }
+}
+function saveQuizState() {
+  if (!currentQuizKey) return;
+  localStorage.setItem(quizStateKey(currentQuizKey), JSON.stringify({
+    name: currentPaperName,
+    qids: shuffledPaper.map(q => q.id),
+    nextIdx: idx + 1,
+    score, flagged: [...flaggedQs],
+    elapsed: elapsedSecs, savedAt: Date.now()
+  }));
+}
+function clearQuizState() {
+  if (currentQuizKey) localStorage.removeItem(quizStateKey(currentQuizKey));
+}
+
+// 知识点掌握度账本：{ kpId: {r, w} }
+function kpStats() {
+  try { return JSON.parse(localStorage.getItem('cpa6_kp_stats') || '{}'); }
+  catch (e) { return {}; }
+}
+function recordKPResult(q, correct) {
+  if (!q.kp_ids || !q.kp_ids.length) return;
+  const s = kpStats();
+  q.kp_ids.forEach(kp => {
+    if (!s[kp]) s[kp] = { r: 0, w: 0 };
+    correct ? s[kp].r++ : s[kp].w++;
+  });
+  localStorage.setItem('cpa6_kp_stats', JSON.stringify(s));
+}
+
 function startPaper(p) {
   currentPaper = p.questions || [];
   currentPaperName = `Mock Paper ${String(p.id).padStart(2,'0')}`;
-  initQuiz();
+  currentQuizKey = 'paper-' + p.id;
+  const saved = loadQuizState(currentQuizKey);
+  if (saved && saved.nextIdx < saved.qids.length) resumeQuiz(saved);
+  else initQuiz();
   showScreen('quiz');
 }
 function startSection(s, qs) {
   currentPaper = qs;
   currentPaperName = `${s.lo} · ${s.title}`;
-  initQuiz();
+  currentQuizKey = 'section-' + s.lo;
+  const saved = loadQuizState(currentQuizKey);
+  if (saved && saved.nextIdx < saved.qids.length && saved.qids.length === qs.length) resumeQuiz(saved);
+  else initQuiz();
   showScreen('quiz');
 }
 
 function initQuiz() {
   shuffledPaper = shuffle(currentPaper).map(shuffleQuestion);
   idx = 0; score = {c:0, w:0}; flaggedQs = new Set(); answered = false;
+  setupQuizUI(0);
+  startTimer(0);
+  renderQ();
+}
+
+// 断点续做：按存档顺序重建题目（未答题目的选项重新洗牌，无影响）
+function resumeQuiz(saved) {
+  const byId = {};
+  currentPaper.forEach(q => byId[q.id] = q);
+  const ordered = saved.qids.map(id => byId[id]).filter(Boolean);
+  if (ordered.length !== saved.qids.length) { initQuiz(); return; } // 题库已变，无法续做
+  shuffledPaper = ordered.map(shuffleQuestion);
+  idx = saved.nextIdx; score = saved.score || {c:0,w:0};
+  flaggedQs = new Set(saved.flagged || []); answered = false;
+  setupQuizUI(idx);
+  document.getElementById('sc').textContent = score.c;
+  document.getElementById('sw').textContent = score.w;
+  document.getElementById('sf').textContent = flaggedQs.size;
+  document.getElementById('resume-banner').style.display = 'block';
+  startTimer(saved.elapsed || 0);
+  renderQ();
+}
+
+function restartQuiz() {
+  clearQuizState();
+  stopTimer();
+  document.getElementById('resume-banner').style.display = 'none';
+  initQuiz();
+}
+
+function setupQuizUI(startIdx) {
   document.getElementById('paper-tag-txt').textContent = currentPaperName;
   document.getElementById('qtot').textContent = shuffledPaper.length;
-  document.getElementById('sr').textContent = shuffledPaper.length;
+  document.getElementById('sr').textContent = shuffledPaper.length - startIdx;
   document.getElementById('sc').textContent = '0';
   document.getElementById('sw').textContent = '0';
   document.getElementById('sf').textContent = '0';
-  document.getElementById('prog').style.width = '0%';
+  document.getElementById('prog').style.width = ((startIdx / shuffledPaper.length) * 100) + '%';
   document.getElementById('overtime-banner').style.display = 'none';
-  startTimer();
-  renderQ();
+  if (startIdx === 0) document.getElementById('resume-banner').style.display = 'none';
 }
 
 function renderQ() {
@@ -1012,6 +1204,8 @@ function submitQ() {
   }
 
   if (correct) score.c++; else score.w++;
+  recordKPResult(q, correct);
+  saveQuizState();
   document.getElementById('sc').textContent = score.c;
   document.getElementById('sw').textContent = score.w;
   if (flaggedQs.has(q.id)) { flaggedQs.delete(q.id); document.getElementById('sf').textContent = flaggedQs.size; }
@@ -1066,6 +1260,8 @@ function confirmGoHome() {
 
 function showResults() {
   stopTimer();
+  clearQuizState();
+  document.getElementById('resume-banner').style.display = 'none';
   const answeredCount = score.c + score.w;
   const totalPct = Math.round((score.c / shuffledPaper.length) * 100);
   let emoji, grade, msg;
